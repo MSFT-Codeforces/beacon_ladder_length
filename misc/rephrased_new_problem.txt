@@ -1,0 +1,186 @@
+# Problem — The Beacon Ladder of Arkhaven
+
+In the underground city of **Arkhaven**, engineers place signal beacons along a tunnel. Each beacon gets an integer “frequency” value.
+
+To prevent interference, the sequence of frequencies must form a **beacon ladder**:
+
+- Frequencies strictly increase.
+- The *gaps* between consecutive frequencies also strictly increase.
+
+Formally, for a sequence \(a_1,a_2,\dots,a_n\):
+
+1. \(a_{i-1} < a_i\) for all \(2 \le i \le n\)
+2. \((a_i-a_{i-1}) < (a_{i+1}-a_i)\) for all \(2 \le i < n\)
+
+For each test case you are given three integers \(l, r, S\):
+
+- Every frequency must stay within the allowed band:  \(l \le a_i \le r\)
+- The city has a power cap: \(\sum_{i=1}^{n} a_i \le S\)
+
+Your task: **for each test case, compute the maximum possible number of beacons \(n\)**.
+
+---
+
+## Input Format
+- First line: integer \(t\) — number of test cases \((1 \le t \le 10^4)\)
+- Next \(t\) lines: three integers \(l, r, S\)  
+  \[
+  1 \le l \le r \le 10^{18},\quad l \le S \le 10^{18}
+  \]
+
+## Output Format
+For each test case, output one integer — the maximum feasible length \(n\).
+
+---
+
+## Sample Input
+```
+3
+1 10 30
+5 100 60
+10 10 10
+```
+
+## Sample Output
+```
+4
+5
+1
+```
+
+---
+
+# Editorial
+
+## 1) What is the smallest possible ladder of a fixed length?
+
+Let the consecutive gaps be:
+\[
+d_i = a_{i+1}-a_i \quad (i=1..n-1)
+\]
+The ladder rules mean:
+- \(d_i\) are positive integers
+- \(d_1 < d_2 < \dots < d_{n-1}\)
+
+To make it easiest to satisfy both the upper bound \(r\) and the sum budget \(S\), we should minimize all values:
+
+- choose the smallest start: \(a_1 = l\)
+- choose the smallest strictly increasing positive gaps:
+  \[
+  d_1=1,\ d_2=2,\ \dots,\ d_{n-1}=n-1
+  \]
+
+Then
+\[
+a_k = l + \sum_{i=1}^{k-1} i
+    = l + \frac{(k-1)k}{2}
+\]
+
+**Key fact:** Any other valid ladder of the same length must have gaps \(\ge 1,2,\dots,n-1\), hence every element (and the total sum) is \(\ge\) this minimal construction.  
+So a length \(n\) is feasible **iff** this minimal ladder fits all constraints.
+
+---
+
+## 2) Feasibility conditions for length \(n\)
+
+### (A) Staying within \([l,r]\)
+The last element of the minimal ladder is:
+\[
+a_n^{\min} = l + \frac{n(n-1)}{2}
+\]
+We need:
+\[
+l + \frac{n(n-1)}{2} \le r
+\]
+
+### (B) Staying within sum budget \(S\)
+Sum of the minimal ladder:
+\[
+\sum_{k=1}^{n}\left(l+\frac{(k-1)k}{2}\right)
+= nl + \frac{n(n+1)(n-1)}{6}
+\]
+We need:
+\[
+nl + \frac{n(n+1)(n-1)}{6} \le S
+\]
+
+So \(n\) is feasible iff both inequalities hold.
+
+---
+
+## 3) Finding the maximum \(n\) (binary search)
+
+Feasibility is monotone: if some \(n\) works, then all smaller lengths work.
+
+We binary search the maximum feasible \(n\).
+
+We also need an upper bound:
+- From range: \(\frac{n(n-1)}{2} \le r-l\) implies \(n = O(\sqrt{r-l})\)
+- From sum: since all \(a_i \ge l\), we must have \(nl \le S\), so \(n \le \left\lfloor S/l \right\rfloor\)
+
+Use:
+\[
+hi = \min\Big(\text{bound from range},\ \left\lfloor S/l \right\rfloor + 1\Big)
+\]
+and binary search on \([1, hi]\).
+
+---
+
+## Complexity
+Per test case: \(O(\log 10^{18})\) checks (≈ up to 60).  
+Total: \(O(t \log 10^{18})\).
+
+---
+
+# Reference Implementation (Python 3)
+
+```python
+import sys
+import math
+
+def max_beacons(l: int, r: int, S: int) -> int:
+    def feasible(n: int) -> bool:
+        # Last element of minimal ladder: l + n(n-1)/2
+        last = l + (n * (n - 1)) // 2
+        if last > r:
+            return False
+
+        # Sum of minimal ladder: n*l + n(n+1)(n-1)/6
+        total = n * l + (n * (n + 1) * (n - 1)) // 6
+        return total <= S
+
+    d = r - l
+
+    # Upper bound from range constraint:
+    # n(n-1)/2 <= d  =>  n ~ (1 + sqrt(1+8d))/2
+    hi_range = (1 + math.isqrt(1 + 8 * d)) // 2 + 2  # small safety margin
+
+    # Upper bound from sum constraint: n*l <= S
+    hi_sum = S // l + 1
+
+    hi = min(hi_range, hi_sum)
+
+    lo, ans = 1, 1  # n=1 always works since l<=r and l<=S
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if feasible(mid):
+            ans = mid
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return ans
+
+def solve() -> None:
+    data = sys.stdin.buffer.read().split()
+    t = int(data[0])
+    idx = 1
+    out = []
+    for _ in range(t):
+        l = int(data[idx]); r = int(data[idx + 1]); S = int(data[idx + 2])
+        idx += 3
+        out.append(str(max_beacons(l, r, S)))
+    sys.stdout.write("\n".join(out))
+
+if __name__ == "__main__":
+    solve()
+```

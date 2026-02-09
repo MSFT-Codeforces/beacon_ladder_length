@@ -1,0 +1,2 @@
+- Codeforces — **1772C: Different Differences** ([codeforces.com](https://codeforces.com/problemset/problem/1772/C?utm_source=openai))  
+  - `https://codeforces.com/problemset/problem/1772/C`

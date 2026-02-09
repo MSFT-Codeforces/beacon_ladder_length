@@ -1,0 +1,239 @@
+**[section_01]**
+Clarifying the rules and objective of a beacon ladder.
+**[atomic_01_01]**
+Each test case provides three integers $l$, $r$, and $S$. We must choose an integer sequence $a_1,a_2,\dots,a_n$ representing beacon frequencies, and every chosen frequency must lie within the allowed band:
+$$l \le a_i \le r$$
+This range restriction applies independently to each element in the sequence.
+
+**[atomic_01_02]**
+The sequence must be strictly increasing:
+$$a_{i-1} < a_i \quad \text{for all } 2 \le i \le n$$
+So no two beacons can share the same frequency, and the order of the sequence matters.
+
+**[atomic_01_03]**
+Define consecutive gaps as:
+$$d_i = a_{i+1} - a_i \quad \text{for } 1 \le i \le n-1$$
+Because the sequence is strictly increasing, each $d_i$ must be a positive integer.
+
+**[atomic_01_04]**
+The defining ladder constraint is that these gaps are also strictly increasing:
+$$d_i < d_{i+1} \quad \text{for all } 1 \le i \le n-2$$
+This means the sequence accelerates: later steps must be larger than earlier steps.
+
+**[atomic_01_05]**
+There is a total budget constraint:
+$$\sum_{i=1}^{n} a_i \le S$$
+The objective is to output, for each test case, the maximum possible length $n$ for which at least one sequence satisfies all constraints.
+
+
+**[section_02]**
+Constructing edge cases and sanity checks to validate interpretations.
+**[atomic_02_01]**
+The minimal possible length is $n=1$. With one element, there are no gaps, so both “strictly increasing” conditions become vacuously true. Feasibility reduces to finding an $a_1$ such that $l \le a_1 \le r$ and $a_1 \le S$. Because the constraints guarantee $l \le S$, choosing $a_1=l$ always makes $n=1$ feasible.
+
+**[atomic_02_02]**
+If $l=r$, then every $a_i$ must equal $l$. Strict increase forbids any length greater than $1$, so the answer must be $1$. This corner case checks that we are not accidentally assuming the ability to “spread out” values.
+
+**[atomic_02_03]**
+If $S=l$, the sum constraint forces $n=1$. Any strictly increasing sequence of length $2$ would have $a_1 \ge l$ and $a_2 \ge l+1$, implying sum $\ge 2l+1 > l$, contradicting the budget.
+
+**[atomic_02_04]**
+When $r-l$ is small, the range constraint dominates. For example, with $l=1$ and $r=2$, the maximum length is $2$ (sequence $1,2$), and length $3$ is impossible regardless of how large $S$ is.
+
+**[atomic_02_05]**
+Extremely large values appear in inputs: $l,r,S$ can be as large as $10^{18}$. This pushes us to be careful with arithmetic validity (for example, multiplication of large integers in fixed-width languages) and also motivates designing checks that do not rely on enumerating large ranges of candidate values.
+
+**[atomic_02_06]**
+Small hand-checks help verify understanding of the gap constraint:
+- For $l=3, r=10$, any length $3$ ladder must have gaps $d_1<d_2$ with $d_1 \ge 1$ and $d_2 \ge 2$, so the last element must be at least $3+1+2=6$.
+- For $l=10, r=10, S=10$, only $n=1$ is possible because the range forces every element to be $10$ but strict increase forbids $n \ge 2$.
+
+
+**[section_03]**
+Implementing brute force generation of all ladders to expose infeasibility.
+**[atomic_03_01]**
+A naive method is to enumerate candidate sequences $a_1,\dots,a_n$ within $[l,r]$, and for each one verify:
+1) strict increase of $a_i$, 2) strict increase of gaps, and 3) sum constraint. This treats the problem as pure search over sequences.
+
+**[atomic_03_02]**
+To reduce obvious redundancy, one might try backtracking: pick $a_1$, then pick $a_2>a_1$ to define $d_1$, then pick $a_3>a_2$ with $d_2>d_1$, and continue. This at least ensures every partial sequence already respects the ladder structure before extending further.
+
+**[atomic_03_03]**
+Even with pruning (stop when the next value exceeds $r$ or partial sum exceeds $S$), the branching factor remains large for wide ranges. The number of valid strictly increasing gap sequences grows rapidly, making the search effectively exponential in the length.
+
+**[atomic_03_04]**
+Time complexity is exponential in $n$ (informally $O(c^n)$ for some $c>1$ depending on available choices), and space complexity is at least $O(n)$ due to recursion depth or storing the partial sequence. With $r$ up to $10^{18}$, even small fractions of the search space are not explorable.
+
+**[atomic_03_05]**
+This attempt fails because it depends on exploring a combinatorial number of sequences. We need a method that decides feasibility of a length without enumerating concrete ladders.
+
+
+**[section_04]**
+Growing a minimal ladder step-by-step and identifying repeated work.
+**[atomic_04_01]**
+A more structured attempt is to focus on a “best chance” ladder: choose $a_1=l$, and then use the smallest possible strictly increasing gaps, namely $1,2,3,\dots$. This produces the slowest-growing ladder and is the first candidate to test for feasibility.
+
+**[atomic_04_02]**
+Using this constructive idea, we can simulate building the ladder:
+- start at $a_1=l$
+- repeatedly add the next gap ($1$, then $2$, then $3$, ...)
+At each step we can check whether the next element remains $\le r$ and whether the running sum remains $\le S$.
+
+**[atomic_04_03]**
+If we repeat this construction “from scratch” for each candidate length $n$, then checking a single $n$ costs $O(n)$ time. If we then try all lengths $1,2,\dots,n_{\max}$ until it fails, the total work becomes:
+$$O(1+2+\dots+n_{\max}) = O(n_{\max}^2) \text{ per test case}$$
+
+**[atomic_04_04]**
+Space complexity is $O(1)$ if we only track the current value and sum, but the time cost dominates. Because $n_{\max}$ can be very large when $r-l$ is large, $O(n_{\max}^2)$ is not viable.
+
+**[atomic_04_05]**
+This attempt fails due to excessive repeated work: we keep reconstructing similar prefixes of the same minimal ladder for many candidate lengths instead of reusing information or using a faster decision method.
+
+
+**[section_05]**
+Replacing simulation with closed forms, then observing linear scanning still dominates.
+**[atomic_05_01]**
+The minimal-ladder construction has a simple formula. With gaps $1,2,\dots,n-1$, the $k$-th element is:
+$$a_k = l + \sum_{i=1}^{k-1} i = l + \frac{(k-1)k}{2}$$
+So the last element is:
+$$a_n = l + \frac{n(n-1)}{2}$$
+
+**[atomic_05_02]**
+The sum of this minimal ladder can also be computed directly:
+$$\sum_{k=1}^{n} a_k
+= nl + \sum_{k=1}^{n} \frac{(k-1)k}{2}
+= nl + \frac{n(n+1)(n-1)}{6}$$
+This eliminates the need to iterate through elements just to get the last value and total sum.
+
+**[atomic_05_03]**
+With these formulas, feasibility of a fixed $n$ can be checked in $O(1)$ time by verifying:
+$$l + \frac{n(n-1)}{2} \le r$$
+and
+$$nl + \frac{n(n+1)(n-1)}{6} \le S$$
+
+**[atomic_05_04]**
+A straightforward use of this is to scan $n=1,2,3,\dots$ and stop when infeasible. This reduces the per-check cost but still performs up to $n_{\max}$ checks, so time becomes $O(n_{\max})$ per test case, with $O(1)$ extra space.
+
+**[atomic_05_05]**
+This attempt fails because $n_{\max}$ can still be huge, so even doing $O(1)$ work for each $n$ is too much. We need to avoid checking every length individually.
+
+
+**[section_06]**
+Using monotonic feasibility with binary search to cut checks to logarithmic.
+**[atomic_06_01]**
+A crucial structural fact is that for any fixed length $n$, the minimal-ladder (start at $l$ with gaps $1,2,\dots,n-1$) produces the smallest possible values among all valid ladders of length $n$. Any valid ladder must have positive strictly increasing integer gaps, so its gaps are component-wise at least $1,2,\dots,n-1$, pushing every element and the total sum upward.
+
+**[atomic_06_02]**
+Therefore, length $n$ is feasible if and only if the minimal ladder satisfies both constraints:
+- Range feasibility:
+  $$l + \frac{n(n-1)}{2} \le r$$
+- Sum feasibility:
+  $$nl + \frac{n(n+1)(n-1)}{6} \le S$$
+If the minimal ladder fails, no other ladder of the same length can succeed.
+
+**[atomic_06_03]**
+These feasibility conditions are monotone in $n$: when you increase $n$, both the last element and the sum of the minimal ladder increase. Hence, if a certain $n$ is feasible, then all smaller lengths are feasible as well.
+
+**[atomic_06_04]**
+Monotonicity enables binary search for the maximum feasible $n$. Each midpoint check uses only the two inequalities above, so each check is $O(1)$ time and $O(1)$ space.
+
+**[atomic_06_05]**
+Binary search needs an upper bound. Two independent upper bounds are easy to derive:
+- From sum: since all $a_i \ge l$, we must have $nl \le S$, so:
+  $$n \le \left\lfloor \frac{S}{l} \right\rfloor$$
+- From range: from $l + \frac{n(n-1)}{2} \le r$ we get:
+  $$\frac{n(n-1)}{2} \le r-l$$
+  which implies $n$ is on the order of $\sqrt{r-l}$; an integer bound can be computed from $\sqrt{1+8(r-l)}$.
+
+**[atomic_06_06]**
+With a valid upper bound $hi$, binary search performs $O(\log hi)$ checks. Since $hi \le 10^{18}$ in scale, this is at most about 60 iterations per test case:
+$$O(\log 10^{18})$$
+Space remains $O(1)$.
+
+**[atomic_06_07]**
+This strictly improves over the linear scan:
+- Previous approach: $O(n_{\max})$ time per test case
+- Current approach: $O(\log n_{\max})$ time per test case
+This improvement is what makes handling up to $10^4$ test cases realistic.
+
+
+**[section_07]**
+Validating arithmetic safety and presenting a reference implementation.
+**[atomic_07_01]**
+The feasibility formulas involve cubic terms like $n(n+1)(n-1)$. In Python, integers are arbitrary precision, so overflow is not a concern, but it is still important to use integer arithmetic carefully (via `//`) to keep results exact and avoid floating-point inaccuracies.
+
+**[atomic_07_02]**
+The algorithm must ensure the lower end is correct: $n=1$ should always be feasible under the stated constraints because choosing $a_1=l$ respects $l \le r$ and $l \le S$. This lets us initialize the binary search answer to $1$ safely.
+
+**[atomic_07_03]**
+A practical upper bound combines the derived bounds:
+- `hi_sum = S // l + 1` caps by the sum constraint.
+- `hi_range` comes from solving $n(n-1)/2 \le r-l$ using integer square root.
+Taking `min(hi_sum, hi_range)` ensures the binary search interval is small enough but never misses the true answer.
+
+**[atomic_07_04]**
+The final complexity characteristics are:
+- Time per test case: $O(\log 10^{18})$
+- Total time: $O(t \log 10^{18})$
+- Extra space: $O(1)$ (excluding I/O buffers)
+This is a strict improvement over all previous attempts in both asymptotic checks and practical feasibility.
+
+**[atomic_07_05]**
+Reference implementation (Python 3, PEP 8, standard library only, line length kept within 79 chars):
+
+```python
+import math
+import sys
+
+
+def max_beacons(l: int, r: int, s: int) -> int:
+    """Return the maximum length n of a beacon ladder for given l, r, s."""
+    def feasible(n: int) -> bool:
+        last = l + (n * (n - 1)) // 2
+        if last > r:
+            return False
+        total = n * l + (n * (n + 1) * (n - 1)) // 6
+        return total <= s
+
+    d = r - l
+
+    hi_range = (1 + math.isqrt(1 + 8 * d)) // 2 + 2
+    hi_sum = s // l + 1
+    hi = min(hi_range, hi_sum)
+
+    lo = 1
+    ans = 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if feasible(mid):
+            ans = mid
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return ans
+
+
+def main() -> None:
+    """Read input, solve all test cases, and print answers."""
+    data = sys.stdin.buffer.read().split()
+    t = int(data[0])
+    idx = 1
+    out_lines = []
+    for _ in range(t):
+        l = int(data[idx])
+        r = int(data[idx + 1])
+        s = int(data[idx + 2])
+        idx += 3
+        out_lines.append(str(max_beacons(l, r, s)))
+    sys.stdout.write("\n".join(out_lines))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+**[atomic_07_06]**
+A few quick self-check inputs (not additional solution logic) that help validate correctness:
+- Single-point interval: $l=r=10, S=10$ should output $1$.
+- Tight sum: $l=5, r=100, S=5$ should output $1$.
+- Moderate case: $l=1, r=10, S=30$ should output $4$ as in the sample.

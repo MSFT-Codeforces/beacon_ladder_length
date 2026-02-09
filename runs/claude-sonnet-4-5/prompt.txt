@@ -1,0 +1,55 @@
+
+You are an expert competitive programmer. 
+You will be provided with a problem statement, first analyze the problem, then provide your solution in Python. 
+Consider edge cases, time complexity, and space complexity. 
+Make sure your solution handles all constraints mentioned in the problem. 
+Your final solution should be a complete, compilable Python program in a python codeblock.
+
+**Beacon Ladder Length**
+
+In the underground city of Arkhaven, engineers place beacons along a tunnel. Each beacon is assigned an integer frequency, forming a sequence $a_1,a_2,\dots,a_n$.
+
+The sequence must be a **beacon ladder**, meaning:
+
+1. Frequencies strictly increase:
+   $$a_{i-1} < a_i \quad \text{for all } 2 \le i \le n$$
+2. The gaps between consecutive frequencies also strictly increase:
+   $$(a_i-a_{i-1}) < (a_{i+1}-a_i) \quad \text{for all } 2 \le i < n$$
+
+For each test case, you are given integers $l$, $r$, and $S$ such that:
+
+- Every frequency must satisfy $l \le a_i \le r$
+- The total power used must satisfy $\sum_{i=1}^{n} a_i \le S$
+
+For each test case, determine the **maximum possible length** $n$ of a beacon ladder.
+
+**Input Format:-**
+
+The first line contains an integer $t$ — the number of test cases.  
+Each of the next $t$ lines contains three integers $l$, $r$, $S$.
+
+**Output Format:-**
+
+For each test case, output a single integer — the maximum feasible $n$.
+
+**Constraints:-**
+
+- $1 \le t \le 10^4$
+- $1 \le l \le r \le 10^{18}$
+- $l \le S \le 10^{18}$
+
+**Examples:-**
+ - **Input:**
+```
+3
+1 10 30
+5 100 60
+10 10 10
+```
+
+ - **Output:**
+```
+4
+5
+1
+```

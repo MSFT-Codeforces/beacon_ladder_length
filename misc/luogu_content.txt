@@ -1,0 +1,13 @@
+We can solve this problem greedily. Let's choose the first element equal to $$$l$$$. Then, the second element should be $$$l+1$$$. The third $$$l+3$$$, and so on. In general, the $$$i-$$$th element is equal to $$$l+\\frac{i\\cdot (i+1)}{2}$$$.
+
+Proof of this solution:
+
+Assume that array $$$a$$$ is the array made by our algorithm and $$$b$$$ is the array with a better answer. This means that $$$len(b)>len(a)$$$. By the construction of $$$a$$$, there exists an integer $$$i$$$ such that for all $$$j<i$$$, $$$a\_j=b\_j$$$ and $$$a\_i<b\_i$$$, because $$$a\_i$$$ we choose as the smallest possible element. WLOG assume that $$$len(b)=len(a)+1=n$$$. Then $$$b\_n-b\_{n-1}>b\_{n-1}-b\_{n-2}\\ge a\_{n-1}-a\_{n-2}$$$. So, we can append $$$b\_n$$$ to the array $$$a$$$, which leads to a contradiction.
+
+Now, the task is to find the biggest $$$x$$$ such that $$$l+\\frac{x\\cdot (x+1)}{2}\\le r$$$. In fact, it can be found by binary search, the formula of discriminant, or just by brute force.
+
+**Solution in C++**
+
+```cpp
+#include <bits/stdc++.h>using namespace std; namespace std { template <int D, typename T>struct Vec : public vector<Vec<D - 1, T>> {    static_assert(D >= 1);    template <typename... Args>    Vec(int n = 0, Args... args) : vector<Vec<D - 1, T>>(n, Vec<D - 1, T>(args...)) {}}; template <typename T>struct Vec<1, T> : public vector<T> {    Vec(int n = 0, T val = T()) : std::vector<T>(n, val) {}}; template <class Fun>class y_combinator_result {    Fun fun_;    public:    template <class T>    explicit y_combinator_result(T &&fun) : fun_(std::forward<T>(fun)) {}     template <class... Args>    decltype(auto) operator()(Args &&...args) {        return fun_(std::ref(*this), std::forward<Args>(args)...);    }}; template <class Fun>decltype(auto) y_combinator(Fun &&fun) {    return y_combinator_result<std::decay_t<Fun>>(std::forward<Fun>(fun));} }  // namespace std int32_t main() {    ios_base::sync_with_stdio(0);    cin.tie(0);     int t;    cin >> t;    while (t--) {        int l, r;        cin >> l >> r;        int n = r - l;        int x = sqrt(n * 2);        while (x * (x - 1) / 2 <= n) x++;        while (x * (x - 1) / 2 > n) x--;        cout << x << '\n';    }}
+```

@@ -1,0 +1,9 @@
+# Metadata
+**Category:** - Coding
+**Topic:** - Competitive Programming
+**Subtopic:** - ["Backtracking Algorithms", "Greedy Algorithms", "Searching Algorithms", "Divide and Conquer", "Algorithm Complexity and Big O Notation"]
+**Difficulty:** - Hard
+**Languages:** - Python
+**Number of Approaches:** - 4, ($O(2^n)$ -> $O(n^2)$ -> $O(n)$ -> $O(\log n)$)
+**Number of Chains:** - 7
+**Model-Breaking:** - False

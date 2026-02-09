@@ -1,0 +1,154 @@
+**1. Problem Understanding**
+
+For each test case, we must construct an integer sequence $a_1,a_2,\dots,a_n$ such that:
+
+- Range constraint: $l \le a_i \le r$ for all $i$.
+- Strictly increasing values: $a_{i-1} < a_i$ for $2 \le i \le n$.
+- Strictly increasing consecutive gaps: with $d_i=a_{i+1}-a_i$,
+  $$d_1 < d_2 < \dots < d_{n-1}$$
+- Sum constraint:
+  $$\sum_{i=1}^{n} a_i \le S$$
+
+We need to output the maximum possible length $n$.
+
+Key observation: for a fixed length $n$, the ladder that minimizes both the last element and the total sum is obtained by taking the smallest start and the smallest strictly increasing positive gaps:
+$$a_1=l,\quad d_1=1,\ d_2=2,\ \dots,\ d_{n-1}=n-1$$
+Any other valid ladder of length $n$ cannot have a smaller last element or a smaller sum, so length $n$ is feasible if and only if this minimal ladder is feasible.
+
+**2. Optimal Approach**
+
+1. **Feasibility check for a given $n$** using the minimal ladder formulas:
+   - Last element:
+     $$a_n = l + \frac{n(n-1)}{2}$$
+     Must satisfy $a_n \le r$.
+   - Sum:
+     $$\sum_{k=1}^{n} a_k = nl + \frac{n(n+1)(n-1)}{6}$$
+     Must satisfy the sum $\le S$.
+
+2. **Binary search for the maximum feasible $n$**, because feasibility is monotone:
+   if a length $n$ works, then all smaller lengths also work.
+
+3. **Upper bound for binary search**:
+   - From $nl \le S$ we get $n \le \left\lfloor \frac{S}{l} \right\rfloor$.
+   - From $\frac{n(n-1)}{2} \le r-l$ we get a bound computed via integer square root.
+
+**3. Code**
+```python
+import math
+import sys
+
+
+def is_length_feasible(
+    lower_bound: int,
+    upper_bound: int,
+    budget_sum: int,
+    length: int,
+) -> bool:
+    """Check whether a minimal beacon ladder of a given length is feasible.
+
+    Args:
+        lower_bound: Minimum allowed value for each element (l).
+        upper_bound: Maximum allowed value for each element (r).
+        budget_sum: Maximum allowed total sum of elements (S).
+        length: Candidate ladder length n.
+
+    Returns:
+        True if a valid beacon ladder of length `length` exists, otherwise False.
+    """
+    last_value = lower_bound + (length * (length - 1)) // 2
+    if last_value > upper_bound:
+        return False
+
+    total_sum = (
+        length * lower_bound
+        + (length * (length + 1) * (length - 1)) // 6
+    )
+    return total_sum <= budget_sum
+
+
+def maximum_beacons(lower_bound: int, upper_bound: int, budget_sum: int) -> int:
+    """Compute the maximum feasible beacon ladder length for one test case.
+
+    Args:
+        lower_bound: Minimum allowed value for each element (l).
+        upper_bound: Maximum allowed value for each element (r).
+        budget_sum: Maximum allowed total sum of elements (S).
+
+    Returns:
+        The maximum integer length n for which a valid beacon ladder exists.
+    """
+    range_width = upper_bound - lower_bound
+
+    upper_from_range = (1 + math.isqrt(1 + 8 * range_width)) // 2 + 2
+    upper_from_sum = budget_sum // lower_bound + 1
+    high = min(upper_from_range, upper_from_sum)
+
+    low = 1
+    best_length = 1
+    while low <= high:
+        midpoint = (low + high) // 2
+        if is_length_feasible(
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            budget_sum=budget_sum,
+            length=midpoint,
+        ):
+            best_length = midpoint
+            low = midpoint + 1
+        else:
+            high = midpoint - 1
+
+    return best_length
+
+
+def main() -> None:
+    """Read input, solve all test cases, and print results.
+
+    Returns:
+        None.
+    """
+    input_stream = sys.stdin.buffer
+    test_cases_line = input_stream.readline().split()
+    test_cases_count = int(test_cases_line[0])
+
+    results = []
+    for _ in range(test_cases_count):
+        line_parts = input_stream.readline().split()
+        lower_bound = int(line_parts[0])
+        upper_bound = int(line_parts[1])
+        budget_sum = int(line_parts[2])
+
+        answer = maximum_beacons(lower_bound, upper_bound, budget_sum)
+        results.append(str(answer))
+
+    sys.stdout.write("\n".join(results))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+**4. Code Explanation**
+
+- `is_length_feasible(...)` checks whether the minimal ladder of a given `length` fits:
+  - Range via `last_value = l + n(n-1)/2`
+  - Sum via `total_sum = n*l + n(n+1)(n-1)/6`
+
+- `maximum_beacons(...)` uses binary search on `length` because feasibility is monotone.
+
+Example (from the sample) with $l=1, r=10, S=30$:
+- For $n=4$: last value is $1+\frac{4\cdot 3}{2}=7 \le 10$ and sum is
+  $4\cdot 1+\frac{4\cdot 5\cdot 3}{6}=14 \le 30$, so feasible.
+- For $n=5$: last value is $1+\frac{5\cdot 4}{2}=11 > 10$, so infeasible.
+Thus the maximum is $4$.
+
+**5. Time and Space Complexity**
+
+For each test case, binary search performs $O(\log n)$ checks, each in $O(1)$ time. With bounds derived from values up to $10^{18}$:
+
+- Time: $O(\log 10^{18})$ per test case, total $O(t \log 10^{18})$
+- Space: $O(1)$ extra space (excluding input/output storage)
+
+**6. Conclusion**
+
+The minimal ladder (starting at $l$ with gaps $1,2,\dots$) is the optimal candidate for feasibility at any fixed length. This converts the task into a monotone feasibility problem over $n$, enabling an efficient binary search solution that comfortably handles the largest constraints.

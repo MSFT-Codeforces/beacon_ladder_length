@@ -1,0 +1,91 @@
+### Corrected/confirmed core observation (what feasibility reduces to)
+For a fixed length \(n\), the ladder is easiest to fit (smallest possible values and smallest possible sum) by choosing:
+
+- \(a_1 = l\)
+- gaps as the smallest strictly increasing **positive integers** (gaps must be \(\ge 1\) because \(a_{i-1}<a_i\) and all values are integers):
+  \[
+  (a_2-a_1,\ a_3-a_2,\ \dots,\ a_n-a_{n-1}) = (1,2,3,\dots,n-1)
+  \]
+
+This yields:
+\[
+a_i = l + \frac{(i-1)i}{2}
+\]
+
+So checking whether *any* beacon ladder of length \(n\) exists is equivalent to checking this minimal ladder against constraints:
+
+1) **Range (last element) constraint**
+\[
+a_n = l + \frac{(n-1)n}{2} \le r
+\]
+
+2) **Sum constraint**
+\[
+\sum_{i=1}^{n} a_i
+= \sum_{i=1}^n \left(l + \frac{(i-1)i}{2}\right)
+= n l + \frac{(n-1)n(n+1)}{6}
+\le S
+\]
+
+This part is accurate as stated above; it’s the key to what needs testing (edge/boundary behavior of these inequalities).
+
+---
+
+## 1) Input range boundaries (min/max values)
+Test extremes and mixed extremes because solutions often mishandle them:
+
+- Absolute minimums: \(l=r=S=1\) (must return \(n=1\)).
+- Very large parameters: \(l=1\), \(r=10^{18}\), \(S=10^{18}\) (pushes \(n\) large).
+- Large \(l\) near \(10^{18}\) with \(r=l\) and \(S=l\) (forces \(n=1\)).
+- Huge range but tight sum, and vice versa, to ensure the solution correctly takes the limiting constraint (range vs sum) rather than assuming one dominates.
+
+---
+
+## 2) Structural edge cases (small \(n\) logic)
+These catch logical mistakes about the “increasing gaps” condition:
+
+- \(n=1\): always feasible under constraints (since \(l\le r\) and \(S\ge l\)); some buggy solutions output 0.
+- \(n=2\): the “gaps strictly increase” condition is **vacuous** because it applies only for \(2 \le i < n\), i.e., no valid \(i\) when \(n=2\). Many implementations mistakenly enforce something extra and undercount.
+- \(n=3\): first non-trivial case where the gap condition actually applies; include cases where \(n=3\) is just feasible and just infeasible (by 1) via each constraint.
+- Tight ranges: \(r=l\), \(r=l+1\), \(r=l+2\), etc., to expose off-by-one in the triangular last-element condition.
+
+---
+
+## 3) Stress conditions (performance + worst numeric patterns)
+- Maximum \(t=10^4\) with varied regimes to ensure per-test efficiency and no state leakage.
+- Cases where a naive upper bound on \(n\) is very large (often derived from the range constraint):
+  \[
+  \frac{n(n-1)}{2} \le r-l \implies n \approx \sqrt{2(r-l)} \le \sqrt{2\cdot 10^{18}} \approx 1.4\cdot 10^9
+  \]
+  Even though the **sum constraint** will cap the *true* answer much lower (on the order of \(10^6\)), binary search midpoints might still reach \(\sim 10^9\) if the upper bound is chosen poorly—this is important for overflow testing.
+
+---
+
+## 4) Common implementation mistakes to target
+### Off-by-one at boundaries
+Include scenarios where the optimal \(n\) hits equality exactly:
+- \(l+\frac{(n-1)n}{2} = r\)
+- \(nl+\frac{(n-1)n(n+1)}{6} = S\)
+and where it fails by 1, to catch `<` vs `<=` and binary search termination bugs.
+
+### Integer overflow in intermediate computations
+Even if \(S\le 10^{18}\), during feasibility checks (especially with large binary-search midpoints like \(10^9\)) computing
+\((n-1)n(n+1)\) can reach \(\sim 10^{27}\), far beyond 64-bit.
+So tests should force the code path to evaluate these large intermediate expressions unless the implementation safely:
+- uses 128-bit / big integers, or
+- reorders computations with division early and/or overflow guards.
+
+### Incorrect handling of small \(n\)
+- Treating \(n=2\) as requiring the increasing-gaps inequality.
+- Failing to consider \(n=1\) as always feasible.
+
+### Algebra/formula mistakes
+Some solutions miscompute the sum term \(\frac{(n-1)n(n+1)}{6}\) (wrong indices or coefficients). Small-\(n\) boundary cases (2,3,4,5) with tight \(r,S\) are good at exposing this.
+
+### Floating-point approximations
+If someone uses `double` for roots to estimate \(n\), near-boundary cases can produce \(\pm 1\) errors due to rounding; include equality/near-equality setups.
+
+---
+
+## 5) Invalid input
+Not applicable: constraints guarantee validity (\(l\le r\) and \(S\ge l\)). Therefore tests should focus only on valid inputs.

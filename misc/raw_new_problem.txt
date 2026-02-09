@@ -1,0 +1,159 @@
+## Problem — Good Array Under Range and Budget
+
+Sakurako studies arrays. An integer array \(a\) of length \(n\) is called **good** if and only if:
+
+1. \(a\) is strictly increasing: \(a_{i-1} < a_i\) for all \(2 \le i \le n\);
+2. its adjacent differences are strictly increasing:
+   \[
+   (a_i-a_{i-1}) < (a_{i+1}-a_i)\quad \text{for all } 2 \le i < n.
+   \]
+
+For each test case, you are given integers \(l, r, S\). You want to build a good array of **maximum possible length** such that:
+
+- \(l \le a_i \le r\) for all \(i\);
+- \(\sum_{i=1}^{n} a_i \le S\).
+
+For each test case, output the maximum possible length.
+
+---
+
+### Input Format
+- The first line contains an integer \(t\) (\(1 \le t \le 10^4\)) — the number of test cases.
+- Each of the next \(t\) lines contains three integers \(l, r, S\)
+  \[
+  1 \le l \le r \le 10^{18},\quad l \le S \le 10^{18}.
+  \]
+
+### Output Format
+For each test case, print one integer — the maximum possible length of a good array satisfying the constraints.
+
+---
+
+## Editorial
+
+### 1) Minimal good array for a fixed length
+
+Let \(d_i = a_{i+1} - a_i\) for \(i=1..n-1\).  
+The conditions imply:
+- \(d_i\) are positive integers,
+- \(d_1 < d_2 < \dots < d_{n-1}\).
+
+To make the array as small as possible (which makes it easiest to satisfy both \(a_i \le r\) and the sum limit), we should:
+- choose the smallest possible start: \(a_1 = l\);
+- choose the smallest strictly increasing positive differences:
+  \[
+  d_1=1,\ d_2=2,\ \dots,\ d_{n-1}=n-1.
+  \]
+
+This yields the **unique minimal** good array of length \(n\):
+\[
+a_k = l + \sum_{i=1}^{k-1} i = l + \frac{(k-1)k}{2}.
+\]
+
+Any other good array of the same length must have every difference \(\ge\) these values, hence every element \(\ge\) the corresponding element here, and therefore also has **at least** the same last element and **at least** the same sum.
+
+So, a length \(n\) is feasible **iff** the minimal construction satisfies both constraints.
+
+---
+
+### 2) Two necessary-and-sufficient inequalities
+
+**Range constraint (last element):**
+\[
+a_n^{\min} = l + \frac{n(n-1)}{2} \le r.
+\]
+
+**Sum constraint:**
+\[
+\sum_{k=1}^{n} a_k^{\min}
+= \sum_{k=1}^{n}\left(l+\frac{(k-1)k}{2}\right)
+= nl + \frac{n(n+1)(n-1)}{6}
+\le S.
+\]
+
+Thus, \(n\) is feasible iff:
+\[
+l + \frac{n(n-1)}{2} \le r
+\quad\text{and}\quad
+nl + \frac{n(n+1)(n-1)}{6} \le S.
+\]
+
+---
+
+### 3) Binary search for the maximum length
+
+Feasibility is monotone: if length \(n\) is feasible, then all lengths \(< n\) are feasible.
+
+We binary search the maximum \(n\). We also need an upper bound:
+- From the range constraint, \(n\) is \(O(\sqrt{r-l})\). We can use:
+  \[
+  n \approx \frac{1 + \sqrt{1+8(r-l)}}{2}.
+  \]
+- From the sum constraint, since \(a_i \ge l\), we must have \(nl \le S\), so \(n \le \lfloor S/l \rfloor\).
+
+Take \(hi = \min(hi\_range, \lfloor S/l \rfloor + 1)\) as a safe upper bound and binary search on \([1, hi]\).
+
+---
+
+### Complexity
+For each test case, binary search takes \(O(\log hi)\) iterations (≤ ~60).  
+Total complexity: \(O(t \log 10^{18})\).
+
+---
+
+## Reference Implementation (Python 3)
+
+```python
+import sys
+import math
+
+def max_len(l: int, r: int, S: int) -> int:
+    def ok(n: int) -> bool:
+        # Range constraint: last element of minimal construction
+        last = l + (n * (n - 1)) // 2
+        if last > r:
+            return False
+
+        # Sum constraint: sum of minimal construction
+        total = n * l + (n * (n + 1) * (n - 1)) // 6
+        return total <= S
+
+    d = r - l
+
+    # Upper bound from range: n(n-1)/2 <= d
+    # n ~= (1 + sqrt(1 + 8d)) / 2
+    hi_range = (1 + math.isqrt(1 + 8 * d)) // 2 + 2  # +2 for safety
+
+    # Upper bound from sum: n*l <= S  =>  n <= floor(S/l)
+    hi_sum = S // l + 1  # +1 for safety
+
+    hi = min(hi_range, hi_sum)
+
+    # n=1 is always feasible due to constraints l<=r and l<=S
+    ans = 1
+    left, right = 1, hi
+    while left <= right:
+        mid = (left + right) // 2
+        if ok(mid):
+            ans = mid
+            left = mid + 1
+        else:
+            right = mid - 1
+    return ans
+
+def solve() -> None:
+    data = sys.stdin.buffer.read().split()
+    t = int(data[0])
+    idx = 1
+    out = []
+    for _ in range(t):
+        l = int(data[idx])
+        r = int(data[idx + 1])
+        S = int(data[idx + 2])
+        idx += 3
+        out.append(str(max_len(l, r, S)))
+    sys.stdout.write("\n".join(out))
+
+if __name__ == "__main__":
+    solve()
+```

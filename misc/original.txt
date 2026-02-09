@@ -1,0 +1,96 @@
+**Problem Statement**
+Sakurako is studying arrays. An array \(a\) of length \(n\) is called **good** if and only if:
+
+1. \(a\) is strictly increasing: \(a_{i-1} < a_i\) for all \(2 \le i \le n\);
+2. the adjacent differences are strictly increasing:  
+   \((a_i - a_{i-1}) < (a_{i+1} - a_i)\) for all \(2 \le i < n\).
+
+Given integers \(l\) and \(r\), Sakurako wants to build a good array of maximum possible length such that
+\[
+l \le a_i \le r \quad \text{for all } i.
+\]
+For each test case, determine the maximum length of such a good array.
+
+**Input Format**
+- The first line contains an integer \(t\) (\(1 \le t \le 10^4\)) — the number of test cases.
+- Each of the next \(t\) lines contains two integers \(l\) and \(r\) (\(1 \le l \le r \le 10^9\)).
+
+**Output Format**
+For each test case, output one integer — the maximum length of a good array with all elements in \([l, r]\).
+
+**Examples**
+Input:
+```
+5
+1 2
+1 5
+2 2
+10 20
+1 1000000000
+```
+
+Output:
+```
+2
+3
+1
+5
+44721
+```
+
+**Editorial**
+To maximize the length, we should make the array grow as slowly as possible while respecting the rules.
+
+A good array must be strictly increasing, and its differences must also be strictly increasing. The smallest possible positive increasing sequence of differences is:
+\[
+1, 2, 3, 4, \dots
+\]
+So we greedily construct the minimal valid array by choosing:
+- \(a_1 = l\)
+- \(a_2 = l + 1\)
+- \(a_3 = l + 1 + 2 = l + 3\)
+- \(a_4 = l + 1 + 2 + 3 = l + 6\), etc.
+
+In general, for length \(m\), the last element is:
+\[
+a_m = l + \sum_{k=1}^{m-1} k = l + \frac{(m-1)m}{2}.
+\]
+This construction is optimal: at each step it chooses the smallest possible next element, so any other good array of the same prefix cannot have smaller values and thus cannot fit more elements within the upper bound \(r\).
+
+Therefore, we need the maximum \(m\) such that:
+\[
+l + \frac{(m-1)m}{2} \le r.
+\]
+Let \(n = r - l\). Then we need:
+\[
+\frac{(m-1)m}{2} \le n.
+\]
+We can find the largest such \(m\) using an integer square-root estimate and a couple of adjustment loops.
+
+**Code**
+```python
+import sys
+import math
+
+def solve() -> None:
+    it = iter(sys.stdin.read().strip().split())
+    t = int(next(it))
+    out_lines = []
+    for _ in range(t):
+        l = int(next(it))
+        r = int(next(it))
+        n = r - l
+
+        # Find maximum x such that x*(x-1)/2 <= n
+        x = math.isqrt(2 * n)  # close to the answer
+        while x * (x - 1) // 2 <= n:
+            x += 1
+        while x * (x - 1) // 2 > n:
+            x -= 1
+
+        out_lines.append(str(x))
+    sys.stdout.write("\n".join(out_lines))
+
+if __name__ == "__main__":
+    solve()
+```

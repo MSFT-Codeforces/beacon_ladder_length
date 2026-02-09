@@ -1,0 +1,17 @@
+- Codeforces Gym — **A. Stairway to Goodness**  
+  ```text
+  https://codeforces.com/gym/608569/problem/A
+  ```  
+  ([codeforces.com](https://codeforces.com/topic/143350/diff/en2/en3?utm_source=openai))
+
+- Codeforces (Global Round 29) — **I1. Longest Increasing Path (Easy Version)** (distance-convex / strictly increasing jump lengths)  
+  ```text
+  https://codeforces.com/contest/2147/problem/I1
+  ```  
+  ([codeforces.com](https://codeforces.com/contest/2147/problem/I1))
+
+- Codeforces (Global Round 29) — **I2. Longest Increasing Path (Hard Version)** (distance-convex / strictly increasing jump lengths)  
+  ```text
+  https://codeforces.com/contest/2147/problem/I2
+  ```  
+  ([codeforces.com](https://codeforces.com/contest/2147/problem/I2))
