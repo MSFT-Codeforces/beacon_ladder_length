@@ -1,6 +1,4 @@
-**Beacon Ladder Length**
-
-Time Limit: **1 seconds**
+Time Limit: **1 second**
 
 Memory Limit: **32 MB**
 

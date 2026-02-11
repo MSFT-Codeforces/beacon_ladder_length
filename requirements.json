@@ -1,16 +1,16 @@
 {
-  "original": "https://www.codeforces.com/problemset/problem/2008/C",
-  "title": "Beacon Ladder Length",
-  "tags": [
-    "Backtracking Algorithms",
-    "Greedy Algorithms",
-    "Searching Algorithms",
-    "Divide and Conquer",
-    "Algorithm Complexity and Big O Notation"
-  ],
-  "model_breaking": false,
-  "time": 1,
-  "space": 32,
-  "new_colab_link": "https://colab.research.google.com/drive/1Nv-nrug--vhefpHrsKP7PqSaSqFP4pja",
-  "github_link": "https://github.com/MSFT-Codeforces/beacon_ladder_length"
+    "original": "https://www.codeforces.com/problemset/problem/2008/C",
+    "title": "Beacon Ladder Length",
+    "tags": [
+        "Backtracking Algorithms",
+        "Greedy Algorithms",
+        "Searching Algorithms",
+        "Divide and Conquer",
+        "Algorithm Complexity and Big O Notation"
+    ],
+    "model_breaking": false,
+    "time": 1,
+    "space": 32,
+    "new_colab_link": "https://colab.research.google.com/drive/1Nv-nrug--vhefpHrsKP7PqSaSqFP4pja",
+    "github_link": "https://github.com/MSFT-Codeforces/beacon_ladder_length"
 }
